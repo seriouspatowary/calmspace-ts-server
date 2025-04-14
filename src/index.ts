@@ -6,6 +6,7 @@ import authRoutes from "./routes/user.route"
 import QuestionRoutes from "./routes/question.route"
 import Blogs from "./routes/blog.route"
 import feature from "./routes/feature.route"
+import counselor from './routes/counselor.route';
 
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use("/api/auth",authRoutes)
 app.use("/api/questions", QuestionRoutes);
 app.use("/api/blogs", Blogs)
 app.use("/api/feauture", feature)
+app.use("/api/counselor",counselor)
 
 app.listen(PORT, () => {
   console.log(`Server running on Port:${PORT}`);

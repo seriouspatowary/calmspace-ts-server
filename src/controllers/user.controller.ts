@@ -7,8 +7,10 @@ import jwt from "jsonwebtoken";
 import UserModel  from "../models/User";
 import sendCustomEmail from "../util/sendMail";
 import OtpModel from "../models/Otp";
+import ProgressBarModel from "../models/ProgressBar";
 
 const jwtsecret = process.env.JWT_SECRET as string;
+const otpsecret = process.env.OTP_SECRET as string
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -100,7 +102,7 @@ export const makeProfile = async (req: AuthenticatedRequest, res: Response): Pro
   try {
 
     if (!req.user || !req.user.id) {
-      res.status(401).json({
+      res.json({
         status_code: 401,
         message: "Unauthorized: User ID missing",
       });
@@ -114,21 +116,21 @@ export const makeProfile = async (req: AuthenticatedRequest, res: Response): Pro
     );
 
     if (!updatedUser) {
-      res.status(404).json({
+      res.json({
         status_code: 404,
         message: "User not found",
       });
       return;
     }
 
-    res.status(201).json({
+    res.json({
       status_code: 201,
       message: "Profile making set to true",
     });
 
   } catch (error) {
     console.error("Error in makeProfile:", error);
-    res.status(500).json({
+    res.json({
       status_code: 500,
       message: "Internal Server Error",
     });
@@ -193,15 +195,136 @@ export const sendOtp = async (req: Request, res: Response): Promise<void> => {
 
     await sendCustomEmail(email, 'Forgot Password', htmlTemplate);
 
-    res.status(201).json({
+    res.json({
       status_code: 201,
       message: 'OTP sent successfully',
     });
   } catch (error) {
     console.error('Error in sendOtp:', error);
-    res.status(500).json({
+    res.json({
       status_code: 500,
       message: 'Internal Server Error',
     });
   }
 };
+
+export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { otp,email } = req.body;
+
+    const userExists = await OtpModel.findOne({ email });
+    if (!userExists) {
+      res.status(404).json({
+        status_code: 404,
+        error: 'Incorrect OTP',
+      });
+      return;
+    }
+
+    const otpCompare = await bcrypt.compare(otp, userExists.otp);
+    if (!otpCompare) {
+     res.json({
+        status_code: 401,
+        error: "Incorrect OTP",
+     });
+        return 
+    }
+
+    const userData = await UserModel.findOne({ email });
+    if (!userData) {
+      res.status(404).json({
+        status_code: 404,
+        error: 'User does not exist',
+      });
+      return;
+    }
+
+    const tempToken = jwt.sign({ id: userData._id }, otpsecret, { expiresIn: "1h" });
+
+
+    res.json({
+      status_code: 201,
+      tempToken:tempToken,
+      message:"OTP Verified Successfully"
+      
+    });
+    
+  } catch (error) {
+    console.error('Error in verifyOtp:', error);
+    res.json({
+      status_code: 500,
+      message: 'Internal Server Error',
+    });
+  }
+
+}
+
+export const resetPassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { resetpassword } = req.body;
+
+    const user = await UserModel.findById(req.user?.id);
+    
+    if (!user) {
+      res.json({
+        status_code: 404,
+        error: 'User not found',
+      });
+      return;
+    }
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(resetpassword, saltRounds);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({
+      status_code: 201,
+      message: "Password has been updated successfully"
+    });
+    
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    res.json({
+      status_code: 500,
+      message: 'Internal Server Error',
+    });
+  }
+
+}
+
+export const getUser  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const user = await UserModel.findById(userId).select("name email");
+
+    if (!user) {
+       res.json({
+        status_code: 404,
+        message: "User Does not exist",
+       });
+      return;
+    }
+
+    const progress = await ProgressBarModel.findOne({ userId }).select("QuestionScore");
+
+    res.json({
+      status_code: 200,
+      message: "User data retrieved successfully",
+      user: {
+        name: user.name,
+        email: user.email,
+      },
+      questionScore: progress ? progress.QuestionScore : null,
+    });
+
+    
+  } catch (error) {
+    console.error('Error in getUser:', error);
+    res.json({
+      status_code: 500,
+      message: 'Internal Server Error',
+    });
+  }
+
+}

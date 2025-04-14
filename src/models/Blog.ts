@@ -1,43 +1,52 @@
-import mongoose, { Document, Schema, Model } from "mongoose";
+import { prop, getModelForClass, modelOptions } from '@typegoose/typegoose';
 
-// 1. Define the interface for the document
-export interface IArticleContent {
-  title?: string;
-  body?: string;
+// 1. Article Content Class
+class ArticleContent {
+  @prop()
+  public title?: string;
+
+  @prop()
+  public body?: string;
 }
 
-export interface IArticle extends Document {
-  title: string;
-  author: string;
-  designation?: string;
-  imgSrc?: string;
-  createdAt: string;
-  category: string;
-  type?: string;
-  desc?: string;
-  content: IArticleContent[];
-  message?: string;
-}
+// 2. Main Article Class
+@modelOptions({
+  schemaOptions: {
+    collection: 'articles', // Optional: customize collection name
+  }
+})
+class Article {
+  @prop({ required: true })
+  public title!: string;
 
-// 2. Define the schema
-const ArticleSchema: Schema<IArticle> = new Schema({
-  title: { type: String, required: true },
-  author: { type: String, required: true },
-  designation: { type: String },
-  imgSrc: { type: String },
-  createdAt: { type: String, required: true },
-  category: { type: String, required: true },
-  type: { type: String },
-  desc: { type: String },
-  content: [
-    {
-      title: { type: String },
-      body: { type: String },
-    },
-  ],
-  message: { type: String },
-});
+  @prop({ required: true })
+  public author!: string;
+
+  @prop()
+  public designation?: string;
+
+  @prop()
+  public imgSrc?: string;
+
+  @prop({ required: true })
+  public createdAt!: string;
+
+  @prop({ required: true })
+  public category!: string;
+
+  @prop()
+  public type?: string;
+
+  @prop()
+  public desc?: string;
+
+  @prop({ type: () => [ArticleContent] }) 
+  public content!: ArticleContent[];
+
+  @prop()
+  public message?: string;
+}
 
 // 3. Export the model
-const Article: Model<IArticle> = mongoose.model<IArticle>("Article", ArticleSchema);
-export default Article;
+const ArticleModel = getModelForClass(Article);
+export default ArticleModel;
