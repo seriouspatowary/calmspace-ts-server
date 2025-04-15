@@ -26,6 +26,9 @@ app.use(cors({
   allowedHeaders: "Content-Type, Authorization" // Allowed headers
 }));
 
+app.get("/", (req, res) => {
+     res.send("Hello Calmspace")
+})
 app.use("/api/auth",authRoutes)
 app.use("/api/questions", QuestionRoutes);
 app.use("/api/blogs", Blogs)
