@@ -10,6 +10,8 @@ const cors_1 = __importDefault(require("cors"));
 const user_route_1 = __importDefault(require("./routes/user.route"));
 const question_route_1 = __importDefault(require("./routes/question.route"));
 const blog_route_1 = __importDefault(require("./routes/blog.route"));
+const feature_route_1 = __importDefault(require("./routes/feature.route"));
+const counselor_route_1 = __importDefault(require("./routes/counselor.route"));
 dotenv_1.default.config();
 (0, db_1.default)();
 const app = (0, express_1.default)();
@@ -23,6 +25,8 @@ app.use((0, cors_1.default)({
 app.use("/api/auth", user_route_1.default);
 app.use("/api/questions", question_route_1.default);
 app.use("/api/blogs", blog_route_1.default);
+app.use("/api/feauture", feature_route_1.default);
+app.use("/api/counselor", counselor_route_1.default);
 app.listen(PORT, () => {
     console.log(`Server running on Port:${PORT}`);
 });

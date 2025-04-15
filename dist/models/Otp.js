@@ -9,43 +9,33 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Question = void 0;
+exports.Otp = void 0;
 const typegoose_1 = require("@typegoose/typegoose");
-// 👇 Define Option as a nested class
-class Option {
-}
-__decorate([
-    (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", String)
-], Option.prototype, "text", void 0);
-__decorate([
-    (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", Number)
-], Option.prototype, "weightage", void 0);
-// 👇 Define the main Question class
-let Question = class Question {
+let Otp = class Otp {
 };
-exports.Question = Question;
+exports.Otp = Otp;
 __decorate([
     (0, typegoose_1.prop)({ required: true }),
     __metadata("design:type", String)
-], Question.prototype, "question", void 0);
+], Otp.prototype, "email", void 0);
 __decorate([
     (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", Number)
-], Question.prototype, "sort_order", void 0);
+    __metadata("design:type", String)
+], Otp.prototype, "otp", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ type: () => [Option], required: true, _id: false }),
-    __metadata("design:type", Array)
-], Question.prototype, "options", void 0);
-exports.Question = Question = __decorate([
+    (0, typegoose_1.prop)({
+        default: Date.now,
+        expires: 300, // document expires after 300 seconds (5 mins)
+    }),
+    __metadata("design:type", Date)
+], Otp.prototype, "created_at", void 0);
+exports.Otp = Otp = __decorate([
     (0, typegoose_1.modelOptions)({
         schemaOptions: {
-            timestamps: false, // You can enable if needed
+            timestamps: { createdAt: 'created_at', updatedAt: false },
         },
     })
-], Question);
-// ✅ Export the model
-const QuestionModel = (0, typegoose_1.getModelForClass)(Question);
-exports.default = QuestionModel;
-//# sourceMappingURL=Question.js.map
+], Otp);
+const OtpModel = (0, typegoose_1.getModelForClass)(Otp);
+exports.default = OtpModel;
+//# sourceMappingURL=Otp.js.map

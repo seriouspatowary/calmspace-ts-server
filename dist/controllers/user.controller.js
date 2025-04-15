@@ -12,13 +12,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.loginUser = exports.registerUser = void 0;
+exports.getUser = exports.resetPassword = exports.verifyOtp = exports.sendOtp = exports.makeProfile = exports.loginUser = exports.registerUser = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const User_1 = require("../models/User");
+const User_1 = __importDefault(require("../models/User"));
+const sendMail_1 = __importDefault(require("../util/sendMail"));
+const Otp_1 = __importDefault(require("../models/Otp"));
+const ProgressBar_1 = __importDefault(require("../models/ProgressBar"));
 const jwtsecret = process.env.JWT_SECRET;
+const otpsecret = process.env.OTP_SECRET;
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, email, age, password, gender, role } = req.body;
@@ -30,7 +34,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
             return;
         }
-        const userExists = yield User_1.User.findOne({ email });
+        const userExists = yield User_1.default.findOne({ email });
         if (userExists) {
             res.json({
                 status_code: 409,
@@ -40,7 +44,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         const salt = yield bcryptjs_1.default.genSalt(10);
         const securePassword = yield bcryptjs_1.default.hash(password, salt);
-        const newUser = new User_1.User({ name, email, age, gender, role, password: securePassword });
+        const newUser = new User_1.default({ name, email, age, gender, role, password: securePassword });
         yield newUser.save();
         res.json({
             status_code: 201,
@@ -59,7 +63,7 @@ exports.registerUser = registerUser;
 const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
-        const userExists = yield User_1.User.findOne({ email });
+        const userExists = yield User_1.default.findOne({ email });
         if (!userExists) {
             res.json({
                 status_code: 404,
@@ -91,4 +95,204 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.loginUser = loginUser;
+const makeProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.user || !req.user.id) {
+            res.json({
+                status_code: 401,
+                message: "Unauthorized: User ID missing",
+            });
+            return;
+        }
+        const updatedUser = yield User_1.default.findByIdAndUpdate(req.user.id, { profileMaking: true }, { new: true });
+        if (!updatedUser) {
+            res.json({
+                status_code: 404,
+                message: "User not found",
+            });
+            return;
+        }
+        res.json({
+            status_code: 201,
+            message: "Profile making set to true",
+        });
+    }
+    catch (error) {
+        console.error("Error in makeProfile:", error);
+        res.json({
+            status_code: 500,
+            message: "Internal Server Error",
+        });
+    }
+});
+exports.makeProfile = makeProfile;
+const generateOTP = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+};
+const sendOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const userExists = yield User_1.default.findOne({ email });
+        if (!userExists) {
+            res.status(404).json({
+                status_code: 404,
+                error: 'Invalid Credentials',
+            });
+            return;
+        }
+        const otp = generateOTP();
+        const hashedOtp = yield bcryptjs_1.default.hash(otp, 10);
+        yield Otp_1.default.deleteMany({ email });
+        yield Otp_1.default.create({
+            email,
+            otp: hashedOtp,
+        });
+        // Step 4: Email HTML Template
+        const htmlTemplate = `
+    <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>OTP Email Template</title>
+      </head>
+      <body>
+      <div style="font-family: Helvetica, Arial, sans-serif; min-width: 1000px; overflow: auto; line-height: 2">
+        <div style="margin: 50px auto; width: 70%; padding: 20px 0">
+          <div style="border-bottom: 1px solid #eee">
+            <a href="" style="font-size: 1.4em; color: #000; text-decoration: none; font-weight: 600">Calmspace</a>
+          </div>
+          <p style="font-size: 1.1em">Hi,</p>
+          <p>Thank you for choosing Calmspace. Use the following OTP to complete your Password Recovery Procedure. OTP is valid for 5 minutes</p>
+          <h2 style="background: #0074D9; margin: 0 auto; width: max-content; padding: 0 10px; color: #fff; border-radius: 4px;">${otp}</h2>
+          <p style="font-size: 0.9em;">Regards,<br />Calmspace</p>
+          <hr style="border: none; border-top: 1px solid #eee" />
+          <div style="float: right; padding: 8px 0; color: #aaa; font-size: 0.8em; line-height: 1; font-weight: 300">
+            <p>Calmspace</p>
+            <p style="font-size: 0.7em; color: #aaa;">Disclaimer: This email template is for illustrative purposes only and does not imply any official endorsement from Calmspace.</p>
+          </div>
+        </div>
+      </div>
+      </body>
+      </html>
+    `;
+        yield (0, sendMail_1.default)(email, 'Forgot Password', htmlTemplate);
+        res.json({
+            status_code: 201,
+            message: 'OTP sent successfully',
+        });
+    }
+    catch (error) {
+        console.error('Error in sendOtp:', error);
+        res.json({
+            status_code: 500,
+            message: 'Internal Server Error',
+        });
+    }
+});
+exports.sendOtp = sendOtp;
+const verifyOtp = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { otp, email } = req.body;
+        const userExists = yield Otp_1.default.findOne({ email });
+        if (!userExists) {
+            res.status(404).json({
+                status_code: 404,
+                error: 'Incorrect OTP',
+            });
+            return;
+        }
+        const otpCompare = yield bcryptjs_1.default.compare(otp, userExists.otp);
+        if (!otpCompare) {
+            res.json({
+                status_code: 401,
+                error: "Incorrect OTP",
+            });
+            return;
+        }
+        const userData = yield User_1.default.findOne({ email });
+        if (!userData) {
+            res.status(404).json({
+                status_code: 404,
+                error: 'User does not exist',
+            });
+            return;
+        }
+        const tempToken = jsonwebtoken_1.default.sign({ id: userData._id }, otpsecret, { expiresIn: "1h" });
+        res.json({
+            status_code: 201,
+            tempToken: tempToken,
+            message: "OTP Verified Successfully"
+        });
+    }
+    catch (error) {
+        console.error('Error in verifyOtp:', error);
+        res.json({
+            status_code: 500,
+            message: 'Internal Server Error',
+        });
+    }
+});
+exports.verifyOtp = verifyOtp;
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { resetpassword } = req.body;
+        const user = yield User_1.default.findById((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
+        if (!user) {
+            res.json({
+                status_code: 404,
+                error: 'User not found',
+            });
+            return;
+        }
+        const saltRounds = 10;
+        const hashedPassword = yield bcryptjs_1.default.hash(resetpassword, saltRounds);
+        user.password = hashedPassword;
+        yield user.save();
+        res.json({
+            status_code: 201,
+            message: "Password has been updated successfully"
+        });
+    }
+    catch (error) {
+        console.error('Error in resetPassword:', error);
+        res.json({
+            status_code: 500,
+            message: 'Internal Server Error',
+        });
+    }
+});
+exports.resetPassword = resetPassword;
+const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const user = yield User_1.default.findById(userId).select("name email");
+        if (!user) {
+            res.json({
+                status_code: 404,
+                message: "User Does not exist",
+            });
+            return;
+        }
+        const progress = yield ProgressBar_1.default.findOne({ userId }).select("QuestionScore");
+        res.json({
+            status_code: 200,
+            message: "User data retrieved successfully",
+            user: {
+                name: user.name,
+                email: user.email,
+            },
+            questionScore: progress ? progress.QuestionScore : null,
+        });
+    }
+    catch (error) {
+        console.error('Error in getUser:', error);
+        res.json({
+            status_code: 500,
+            message: 'Internal Server Error',
+        });
+    }
+});
+exports.getUser = getUser;
 //# sourceMappingURL=user.controller.js.map

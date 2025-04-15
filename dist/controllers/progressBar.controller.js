@@ -12,23 +12,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBlogs = void 0;
-const express_async_handler_1 = __importDefault(require("express-async-handler"));
-const Blog_1 = __importDefault(require("../models/Blog")); // Adjust path if needed
-exports.getBlogs = (0, express_async_handler_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.createProgressBar = void 0;
+const ProgressBar_1 = __importDefault(require("../models/ProgressBar"));
+const createProgressBar = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const articles = yield Blog_1.default.find({});
-        res.status(201).json({
-            status_code: 201,
-            data: articles,
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const { QuestionScore } = req.body;
+        const existingProgress = yield ProgressBar_1.default.findOne({ userId });
+        if (existingProgress) {
+            res.json({
+                status_code: 400,
+                message: "Progress Bar already exists for this user."
+            });
+            return;
+        }
+        const progressBar = new ProgressBar_1.default({
+            userId,
+            QuestionScore
         });
+        const saveprogressBar = yield progressBar.save();
+        res.status(201).json(saveprogressBar);
     }
     catch (error) {
-        console.error("Error fetching Blogs:", error);
+        console.error("Error in createProgressBar:", error);
         res.status(500).json({
             status_code: 500,
             message: "Internal Server Error",
         });
     }
-}));
-//# sourceMappingURL=blog.controller.js.map
+});
+exports.createProgressBar = createProgressBar;
+//# sourceMappingURL=progressBar.controller.js.map

@@ -4,9 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const blog_controller_1 = require("../controllers/blog.controller");
 const fetchUser_1 = __importDefault(require("../middleware/fetchUser"));
+const counselor_controller_1 = require("../controllers/counselor.controller");
 const router = express_1.default.Router();
-router.get("/", fetchUser_1.default, blog_controller_1.getBlogs);
+router.get("/", fetchUser_1.default, counselor_controller_1.getAllcounselor);
 exports.default = router;
-//# sourceMappingURL=blog.route.js.map
+//# sourceMappingURL=counselor.route.js.map

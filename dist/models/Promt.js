@@ -9,43 +9,44 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Question = void 0;
+exports.UserPromptModel = exports.UserPrompt = void 0;
+// models/UserPrompt.ts
 const typegoose_1 = require("@typegoose/typegoose");
-// 👇 Define Option as a nested class
-class Option {
+const User_1 = require("../models/User"); // Adjust path as needed
+require("reflect-metadata");
+class UserPrompt {
 }
+exports.UserPrompt = UserPrompt;
 __decorate([
-    (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", String)
-], Option.prototype, "text", void 0);
-__decorate([
-    (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", Number)
-], Option.prototype, "weightage", void 0);
-// 👇 Define the main Question class
-let Question = class Question {
-};
-exports.Question = Question;
-__decorate([
-    (0, typegoose_1.prop)({ required: true }),
-    __metadata("design:type", String)
-], Question.prototype, "question", void 0);
+    (0, typegoose_1.prop)({ ref: () => User_1.User, required: true, unique: true }),
+    __metadata("design:type", Object)
+], UserPrompt.prototype, "userId", void 0);
 __decorate([
     (0, typegoose_1.prop)({ required: true }),
     __metadata("design:type", Number)
-], Question.prototype, "sort_order", void 0);
+], UserPrompt.prototype, "age", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ type: () => [Option], required: true, _id: false }),
-    __metadata("design:type", Array)
-], Question.prototype, "options", void 0);
-exports.Question = Question = __decorate([
-    (0, typegoose_1.modelOptions)({
-        schemaOptions: {
-            timestamps: false, // You can enable if needed
-        },
-    })
-], Question);
-// ✅ Export the model
-const QuestionModel = (0, typegoose_1.getModelForClass)(Question);
-exports.default = QuestionModel;
-//# sourceMappingURL=Question.js.map
+    (0, typegoose_1.prop)({ required: true }),
+    __metadata("design:type", String)
+], UserPrompt.prototype, "gender", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ required: true }),
+    __metadata("design:type", Number)
+], UserPrompt.prototype, "maxBudget", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ required: true }),
+    __metadata("design:type", Number)
+], UserPrompt.prototype, "minBudget", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ required: true }),
+    __metadata("design:type", String)
+], UserPrompt.prototype, "language", void 0);
+__decorate([
+    (0, typegoose_1.prop)({ default: () => new Date() }),
+    __metadata("design:type", Date)
+], UserPrompt.prototype, "createdAt", void 0);
+// Create the model
+exports.UserPromptModel = (0, typegoose_1.getModelForClass)(UserPrompt, {
+    schemaOptions: { timestamps: true },
+});
+//# sourceMappingURL=Promt.js.map
