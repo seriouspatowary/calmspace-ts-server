@@ -12,7 +12,7 @@ class ArticleContent {
 // 2. Main Article Class
 @modelOptions({
   schemaOptions: {
-    collection: 'articles', // Optional: customize collection name
+    collection: 'articles', 
   }
 })
 class Article {

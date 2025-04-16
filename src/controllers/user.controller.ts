@@ -87,6 +87,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   res.json({
       status_code: 200,
       profileStatus: userExists.profileMaking,
+      role:userExists.role,
       authToken,
     });
   } catch (error) {
@@ -141,6 +142,7 @@ export const makeProfile = async (req: AuthenticatedRequest, res: Response): Pro
 const generateOTP = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
+
 
 export const sendOtp = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -262,7 +264,6 @@ export const verifyOtp = async (req: Request, res: Response): Promise<void> => {
 export const resetPassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { resetpassword } = req.body;
-
     const user = await UserModel.findById(req.user?.id);
     
     if (!user) {
