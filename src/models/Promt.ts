@@ -28,6 +28,7 @@ export class UserPrompt {
 }
 
 // Create the model
-export const UserPromptModel = getModelForClass(UserPrompt, {
+const UserPromptModel = getModelForClass(UserPrompt, {
   schemaOptions: { timestamps: true },
 });
+export default UserPromptModel;

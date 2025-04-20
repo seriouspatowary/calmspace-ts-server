@@ -8,6 +8,7 @@ import UserModel  from "../models/User";
 import sendCustomEmail from "../util/sendMail";
 import OtpModel from "../models/Otp";
 import ProgressBarModel from "../models/ProgressBar";
+import  UserPromptModel  from "../models/Promt";
 
 const jwtsecret = process.env.JWT_SECRET as string;
 const otpsecret = process.env.OTP_SECRET as string
@@ -328,4 +329,61 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
     });
   }
 
+}
+
+
+ export const postUserPromt  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const userId = req.user?.id;
+    const {
+      age,
+      gender,
+      maxBudget,
+      minBudget,
+      language
+    } = req.body;
+
+  try {
+    const existingPromt = await UserPromptModel .findOne({ userId });
+
+    if (existingPromt) {
+      res.json({
+        status_code: 400,
+        message: "Prompt already exists for this user."
+      });
+      return;
+    }
+
+    const userPromt = new UserPromptModel ({
+      userId,
+      age,
+      gender,
+      maxBudget,
+      minBudget,
+      language
+    });
+
+    const saveuserPromt = await userPromt.save();
+
+    if (saveuserPromt && saveuserPromt._id) {
+       res.json({
+        status_code: 201,
+        message: "Prompt saved successfully"
+       });
+      return
+    } else {
+      res.json({
+        status_code: 500,
+        message: "Failed to save prompt"
+      });
+      return
+    }
+
+  } catch (error) {
+    console.error("Error Inserting UserPromt:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Error inserting prompt",
+      error
+    });
+  }
 }
