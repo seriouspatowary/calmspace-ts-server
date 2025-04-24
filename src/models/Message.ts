@@ -11,9 +11,6 @@ class Message {
   @prop()
   public text?: string;
 
-  @prop()
-  public image?: string;
-
   @prop({ default: Date.now })
   public createdAt?: Date;
 
