@@ -298,7 +298,7 @@ export const resetPassword = async (req: AuthenticatedRequest, res: Response): P
 export const getUser  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
-    const user = await UserModel.findById(userId).select("name email");
+    const user = await UserModel.findById(userId).select("-password");
 
     if (!user) {
        res.json({
@@ -313,10 +313,7 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
     res.json({
       status_code: 200,
       message: "User data retrieved successfully",
-      user: {
-        name: user.name,
-        email: user.email,
-      },
+      user: user,
       questionScore: progress ? progress.QuestionScore : null,
     });
 
