@@ -36,7 +36,7 @@ export const updateInfo = async (req: AuthenticatedRequest, res: Response): Prom
 
     await counselor.save();
     res.json({
-      status_code:500,
+      status_code:200,
       message: "Saved counselor info",
     });
   } catch (error) {
