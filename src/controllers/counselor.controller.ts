@@ -132,7 +132,10 @@ export const toggleCounselorStatus = async (req: AuthenticatedRequest, res: Resp
 export const getAllcounselor  = async (req: Request, res: Response): Promise<void> => {
   try {      
       const counselors = await CounselorModel.find()
-      .populate("counselorId")
+      .populate({
+        path: "counselorId",
+        select: "-password", 
+      })
           .populate("priceId"); 
     
       res.status(201).json(counselors);
@@ -150,7 +153,10 @@ export const getCounselorById  = async (req: AuthenticatedRequest, res: Response
   try {      
       const counselorId = req.user?.id;
       const counselors = await CounselorModel.findOne({counselorId})
-      .populate("counselorId")
+      .populate({
+        path: "counselorId",
+        select: "-password", // exclude password from User model
+      })
           .populate("priceId"); 
     
       res.status(201).json(counselors);
