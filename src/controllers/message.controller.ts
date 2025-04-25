@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import MessageModel from "../models/Message";
-import { getReceiverSocketId ,io} from "../lib/socket.js";
+import { getReceiverSocketId ,io} from "../lib/socket";
 
 
 interface AuthenticatedRequest extends Request {

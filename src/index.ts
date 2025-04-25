@@ -8,6 +8,7 @@ import Blogs from "./routes/blog.route"
 import feature from "./routes/feature.route"
 import counselor from './routes/counselor.route';
 import progressBarRoutes from './routes/progressbar.route'
+import messageRoutes from './routes/message.route'
 import {app,server} from './lib/socket'
 
 
@@ -37,6 +38,7 @@ app.use("/api/blogs", Blogs)
 app.use("/api/feauture", feature)
 app.use("/api/counselor",counselor)
 app.use("/api/progress", progressBarRoutes)
+app.use("/api/message",messageRoutes)
 
 server.listen(PORT, () => {
   console.log(`Server running on Port:${PORT}`);

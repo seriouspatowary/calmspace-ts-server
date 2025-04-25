@@ -8,7 +8,9 @@ import UserModel  from "../models/User";
 import sendCustomEmail from "../util/sendMail";
 import OtpModel from "../models/Otp";
 import ProgressBarModel from "../models/ProgressBar";
-import  UserPromptModel  from "../models/Promt";
+import UserPromptModel from "../models/Promt";
+import VerificationMasterModel from "../models/VerificationMaster";
+import { Counselor } from "models/Counselor";
 
 const jwtsecret = process.env.JWT_SECRET as string;
 const otpsecret = process.env.OTP_SECRET as string
@@ -83,13 +85,23 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         return 
     }
 
+   // Check verification status
+    const verification = await VerificationMasterModel.findOne({
+      userId: userExists._id,
+      adminVerified: true,
+    });
+
+    const isVerified = !!verification; 
+
     const authToken = jwt.sign({ id: userExists._id }, jwtsecret, { expiresIn: "10d" });
 
-  res.json({
+   res.json({
       status_code: 200,
       profileStatus: userExists.profileMaking,
       role:userExists.role,
       authToken,
+      isVerified
+      
     });
   } catch (error) {
     console.error("Error logging in user:", error);

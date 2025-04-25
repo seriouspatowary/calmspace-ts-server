@@ -19,7 +19,7 @@ const isVerifiedCounselor = async (req: CustomRequest,res: Response, next: NextF
     }
 
     const verification = await VerificationMasterModel.findOne({
-      user_id: userId,
+      userId: userId,
       adminVerified: true,
     });
 
