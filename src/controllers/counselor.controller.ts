@@ -49,7 +49,7 @@ export const updateInfo = async (req: AuthenticatedRequest, res: Response): Prom
 }
 
 
-export const updatebyID = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+export const editInfo = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
    const {
     info,
     expertise,
@@ -146,9 +146,9 @@ export const getAllcounselor  = async (req: Request, res: Response): Promise<voi
   }
 }
 
-export const getCounselorById  = async (req: Request, res: Response): Promise<void> => {
+export const getCounselorById  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {      
-      const counselorId = req.params.id;
+      const counselorId = req.user?.id;
       const counselors = await CounselorModel.findOne({counselorId})
       .populate("counselorId")
           .populate("priceId"); 
