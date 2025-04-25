@@ -9,7 +9,47 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+
 export const updateInfo = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    const {
+    info,
+    expertise,
+    languages,
+    experience,
+    degree,
+    therapy,
+    speciality,
+  } = req.body;
+  const counselorId = req.user?.id;
+
+  try {
+    const counselor = new CounselorModel({
+      counselorId: counselorId,
+      info: info,
+      expertise: expertise,
+      languages: languages,
+      experience: experience,
+      degree: degree,
+      therapy: therapy,
+      speciality: speciality,
+    });
+
+    await counselor.save();
+    res.json({
+      status_code:500,
+      message: "Saved counselor info",
+    });
+  } catch (error) {
+    console.error("Error creating counselor info:", error);
+    res.json({
+      status_code:500,
+      message: "Error creating counselor info",
+    });
+  }
+}
+
+
+export const updatebyID = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
    const {
     info,
     expertise,
@@ -92,6 +132,24 @@ export const toggleCounselorStatus = async (req: AuthenticatedRequest, res: Resp
 export const getAllcounselor  = async (req: Request, res: Response): Promise<void> => {
   try {      
       const counselors = await CounselorModel.find()
+      .populate("counselorId")
+          .populate("priceId"); 
+    
+      res.status(201).json(counselors);
+
+  } catch (error) {
+    console.error("Error in getAllcounselor:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Internal Server Error",
+    });
+  }
+}
+
+export const getCounselorById  = async (req: Request, res: Response): Promise<void> => {
+  try {      
+      const counselorId = req.params.id;
+      const counselors = await CounselorModel.findOne({counselorId})
       .populate("counselorId")
           .populate("priceId"); 
     
