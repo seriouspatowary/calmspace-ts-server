@@ -6,7 +6,7 @@ import isVerifiedCounselor from "../middleware/isVerifiedCounselor";
 const router = express.Router();
 
 router.get("/", fetchuser, getAllcounselor); // for user screen
-router.put("/update-info", fetchuser, isVerifiedCounselor, updateInfo);//
+router.post("/update-info", fetchuser, isVerifiedCounselor, updateInfo);//
 router.post("/Updateonline", fetchuser, isVerifiedCounselor, toggleCounselorStatus);
 router.get("/:id",fetchuser, getCounselorById)
 
