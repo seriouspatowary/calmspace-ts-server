@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import asyncHandler from "express-async-handler";
 import CounselorModel from "../models/Counselor";
-
-
+import MessageModel from "../models/Message";
+import UserModel from "../models/User";
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -169,3 +168,39 @@ export const getCounselorById  = async (req: AuthenticatedRequest, res: Response
     });
   }
 }
+
+
+export const getUserForSidebar = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const myId = req.user?.id;
+    const messages = await MessageModel.find({
+      $or: [
+        { senderId: myId },
+        { receiverId: myId },
+      ]
+    });
+
+    // Step 2: Extract unique user IDs from messages
+    const userIds = new Set<string>();
+
+    messages.forEach((message) => {
+      if (message.senderId.toString() !== myId) {
+        userIds.add(message.senderId.toString());
+      }
+      if (message.receiverId.toString() !== myId) {
+        userIds.add(message.receiverId.toString());
+      }
+    });
+
+    // Step 3: Fetch users from UserModel
+    const users = await UserModel.find({
+      _id: { $in: Array.from(userIds) }
+    }).select("-password");
+
+    res.status(200).json(users);
+
+  } catch (error) {
+    console.error('Error fetching users for sidebar:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};

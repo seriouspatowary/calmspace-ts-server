@@ -21,7 +21,6 @@ export const sendMessage = async (req: AuthenticatedRequest, res: Response): Pro
             text   
         });
         await newMessage.save();
-
         const ReceiverSocketId = getReceiverSocketId(receiverId)
         if (ReceiverSocketId) {
             io.to(ReceiverSocketId).emit("newMessage",newMessage)
