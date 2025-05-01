@@ -17,5 +17,5 @@ jobs:
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
     - run: npm ci
-    - run: pm2 start dist/app.js
+    - run: pm2 restart dist/app.js
    
