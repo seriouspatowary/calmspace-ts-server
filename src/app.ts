@@ -13,7 +13,7 @@ import messageRoutes from './routes/message.route'
 import {app,server} from './lib/socket'
 
 
-dotenv.config({ path: path.resolve(__dirname, '../../', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../', '.env') });
 
 
 
