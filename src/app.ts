@@ -1,5 +1,6 @@
 import express from 'express';
-import dotenv from "dotenv";
+import path from 'path';
+import dotenv from 'dotenv';
 import connectDB from "./config/db"; 
 import cors from "cors";
 import authRoutes from "./routes/user.route"
@@ -12,7 +13,8 @@ import messageRoutes from './routes/message.route'
 import {app,server} from './lib/socket'
 
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../', '.env') });
+
 
 
 connectDB();
