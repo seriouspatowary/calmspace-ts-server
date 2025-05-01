@@ -2,11 +2,11 @@
   "name": "calmspace-ts-server",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "dev": "nodemon",
     "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc",
-    "start": "npm run build && node --max-old-space-size=1024 dist/index.js"
+    "start": "npm run build && node --max-old-space-size=1024 dist/app.js"
   },
   "keywords": [],
   "author": "",

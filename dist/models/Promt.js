@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UserPromptModel = exports.UserPrompt = void 0;
+exports.UserPrompt = void 0;
 // models/UserPrompt.ts
 const typegoose_1 = require("@typegoose/typegoose");
 const User_1 = require("../models/User"); // Adjust path as needed
@@ -46,7 +46,8 @@ __decorate([
     __metadata("design:type", Date)
 ], UserPrompt.prototype, "createdAt", void 0);
 // Create the model
-exports.UserPromptModel = (0, typegoose_1.getModelForClass)(UserPrompt, {
+const UserPromptModel = (0, typegoose_1.getModelForClass)(UserPrompt, {
     schemaOptions: { timestamps: true },
 });
+exports.default = UserPromptModel;
 //# sourceMappingURL=Promt.js.map

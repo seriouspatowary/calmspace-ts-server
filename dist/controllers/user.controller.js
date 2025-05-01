@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUser = exports.resetPassword = exports.verifyOtp = exports.sendOtp = exports.makeProfile = exports.loginUser = exports.registerUser = void 0;
+exports.postUserPromt = exports.getUser = exports.resetPassword = exports.verifyOtp = exports.sendOtp = exports.makeProfile = exports.loginUser = exports.registerUser = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
@@ -21,6 +21,8 @@ const User_1 = __importDefault(require("../models/User"));
 const sendMail_1 = __importDefault(require("../util/sendMail"));
 const Otp_1 = __importDefault(require("../models/Otp"));
 const ProgressBar_1 = __importDefault(require("../models/ProgressBar"));
+const Promt_1 = __importDefault(require("../models/Promt"));
+const VerificationMaster_1 = __importDefault(require("../models/VerificationMaster"));
 const jwtsecret = process.env.JWT_SECRET;
 const otpsecret = process.env.OTP_SECRET;
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -79,11 +81,19 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
+        // Check verification status
+        const verification = yield VerificationMaster_1.default.findOne({
+            userId: userExists._id,
+            adminVerified: true,
+        });
+        const isVerified = !!verification;
         const authToken = jsonwebtoken_1.default.sign({ id: userExists._id }, jwtsecret, { expiresIn: "10d" });
         res.json({
             status_code: 200,
             profileStatus: userExists.profileMaking,
+            role: userExists.role,
             authToken,
+            isVerified
         });
     }
     catch (error) {
@@ -267,7 +277,7 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const user = yield User_1.default.findById(userId).select("name email");
+        const user = yield User_1.default.findById(userId).select("-password");
         if (!user) {
             res.json({
                 status_code: 404,
@@ -279,10 +289,7 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         res.json({
             status_code: 200,
             message: "User data retrieved successfully",
-            user: {
-                name: user.name,
-                email: user.email,
-            },
+            user: user,
             questionScore: progress ? progress.QuestionScore : null,
         });
     }
@@ -295,4 +302,51 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     }
 });
 exports.getUser = getUser;
+const postUserPromt = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    const { age, gender, maxBudget, minBudget, language } = req.body;
+    try {
+        const existingPromt = yield Promt_1.default.findOne({ userId });
+        if (existingPromt) {
+            res.json({
+                status_code: 400,
+                message: "Prompt already exists for this user."
+            });
+            return;
+        }
+        const userPromt = new Promt_1.default({
+            userId,
+            age,
+            gender,
+            maxBudget,
+            minBudget,
+            language
+        });
+        const saveuserPromt = yield userPromt.save();
+        if (saveuserPromt && saveuserPromt._id) {
+            res.json({
+                status_code: 201,
+                message: "Prompt saved successfully"
+            });
+            return;
+        }
+        else {
+            res.json({
+                status_code: 500,
+                message: "Failed to save prompt"
+            });
+            return;
+        }
+    }
+    catch (error) {
+        console.error("Error Inserting UserPromt:", error);
+        res.status(500).json({
+            status_code: 500,
+            message: "Error inserting prompt",
+            error
+        });
+    }
+});
+exports.postUserPromt = postUserPromt;
 //# sourceMappingURL=user.controller.js.map

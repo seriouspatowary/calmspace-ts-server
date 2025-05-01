@@ -67,7 +67,7 @@ __decorate([
 Article = __decorate([
     (0, typegoose_1.modelOptions)({
         schemaOptions: {
-            collection: 'articles', // Optional: customize collection name
+            collection: 'articles',
         }
     })
 ], Article);
