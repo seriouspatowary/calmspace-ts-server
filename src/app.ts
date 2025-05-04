@@ -32,13 +32,13 @@ app.use(cors({
 app.get("/", (req, res) => {
      res.send("Hello Calmspace")
 })
-app.use("/auth",authRoutes)
-app.use("/questions", QuestionRoutes);
-app.use("/blogs", Blogs)
-app.use("/feauture", feature)
-app.use("/counselor",counselor)
-app.use("/progress", progressBarRoutes)
-app.use("/message",messageRoutes)
+app.use("/api/auth",authRoutes)
+app.use("/api/questions", QuestionRoutes);
+app.use("/api/blogs", Blogs)
+app.use("/api/feauture", feature)
+app.use("/api/counselor",counselor)
+app.use("/api/progress", progressBarRoutes)
+app.use("/api/message",messageRoutes)
 
 server.listen(PORT, () => {
   console.log(`Server running on Port:${PORT}`);
