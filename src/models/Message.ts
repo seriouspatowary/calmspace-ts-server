@@ -1,5 +1,5 @@
 import { prop, getModelForClass, Ref } from '@typegoose/typegoose';
-import { User } from './User'; // Make sure this is the correct path to your User model
+import { User } from './User'; 
 
 class Message {
   @prop({ ref: () => User, required: true })
@@ -8,7 +8,7 @@ class Message {
   @prop({ ref: () => User, required: true })
   public receiverId!: Ref<User>;
 
-  @prop()
+  @prop({ required: true })
   public text?: string;
 
   @prop({ default: Date.now })
