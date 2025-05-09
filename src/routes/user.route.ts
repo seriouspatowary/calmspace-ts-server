@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser, makeProfile,sendOtp ,verifyOtp ,resetPassword, getUser, postUserPromt} from "../controllers/user.controller";
+import { registerUser, loginUser, makeProfile,sendOtp ,verifyOtp ,resetPassword, getUser, postUserPromt,getWeeklyUserCounts} from "../controllers/user.controller";
 import fetchUser from "../middleware/fetchUser";
 import checkToken from "../middleware/checkToken";
 import checkRole  from "../middleware/checkRoleuser";
@@ -14,6 +14,7 @@ router.post("/verify-otp", verifyOtp)
 router.post("/reset-password",checkToken,resetPassword)
 router.get("/user-data", fetchUser, getUser);
 router.post("/user-promt", fetchUser, postUserPromt);
+router.get("/count",getWeeklyUserCounts)
 
 
 export default router;

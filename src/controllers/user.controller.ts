@@ -25,6 +25,62 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+
+export const getWeeklyUserCounts = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const weeklyData = await UserModel.aggregate([
+      {
+        $match: {
+          createdAt: { $exists: true },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            week: { $isoWeek: "$createdAt" },
+          },
+          totalUsers: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { "_id.year": 1, "_id.week": 1 },
+      },
+    ]);
+
+    const result = weeklyData.map((entry, index) => {
+      const previous = weeklyData[index - 1];
+      const currentCount = entry.totalUsers;
+      const previousCount = previous ? previous.totalUsers : 0;
+
+      let percentChange: number | null = null;
+
+      if (previousCount === 0) {
+        percentChange = null; // Or define as 100 if currentCount > 0
+      } else {
+        percentChange = ((currentCount - previousCount) / previousCount) * 100;
+        percentChange = Math.min(Math.max(percentChange, -100), 100); // Clamp between -100% and 100%
+        percentChange = Math.round(percentChange * 100) / 100; // Round to 2 decimals
+      }
+
+      return {
+        year: entry._id.year,
+        week: entry._id.week,
+        totalUsers: currentCount,
+        percentChangeFromPreviousWeek: percentChange,
+      };
+    });
+
+    res.json({ result });
+  } catch (error) {
+    console.error("Error in getWeeklyUserCounts:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, age, password, gender, role } = req.body;
