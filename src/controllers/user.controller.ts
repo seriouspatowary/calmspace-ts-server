@@ -158,7 +158,8 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
    res.json({
       status_code: 200,
       profileStatus: userExists.profileMaking,
-      role:userExists.role,
+      role: userExists.role,
+      user:userExists._id,
       authToken,
       isVerified
       
