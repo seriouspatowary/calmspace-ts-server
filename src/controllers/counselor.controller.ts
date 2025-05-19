@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import CounselorModel from "../models/Counselor";
 import MessageModel from "../models/Message";
 import UserModel from "../models/User";
+import ScheduleMasterModel from "../models/ScheduleMaster";
+
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
@@ -128,17 +130,54 @@ export const toggleCounselorStatus = async (req: AuthenticatedRequest, res: Resp
 
 
 
-export const getAllcounselor  = async (req: Request, res: Response): Promise<void> => {
-  try {      
-      const counselors = await CounselorModel.find()
+// export const getAllcounselor  = async (req: Request, res: Response): Promise<void> => {
+//   try {      
+//       const counselors = await CounselorModel.find()
+//       .populate({
+//         path: "counselorId",
+//         select: "-password", 
+//       })
+//       .populate("priceId"); 
+    
+//       res.status(201).json(counselors);
+
+//   } catch (error) {
+//     console.error("Error in getAllcounselor:", error);
+//     res.status(500).json({
+//       status_code: 500,
+//       message: "Internal Server Error",
+//     });
+//   }
+// }
+
+export const getAllcounselor = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const counselors = await CounselorModel.find()
       .populate({
         path: "counselorId",
-        select: "-password", 
+        select: "-password",
       })
-          .populate("priceId"); 
-    
-      res.status(201).json(counselors);
+      .populate("priceId")
+      .lean(); // to allow modification of results
 
+    // Fetch all schedules
+    const schedules = await ScheduleMasterModel.find().lean();
+
+    // Create a map for quick lookup by userId
+    const scheduleMap = new Map(
+      schedules.map((sched) => [sched.userId.toString(), sched])
+    );
+
+    // Attach schedule to each counselor
+    const enrichedCounselors = counselors.map((counselor) => {
+      const userId = counselor.counselorId?._id?.toString();
+      return {
+        ...counselor,
+        schedule: userId ? scheduleMap.get(userId) || null : null,
+      };
+    });
+
+    res.status(200).json(enrichedCounselors);
   } catch (error) {
     console.error("Error in getAllcounselor:", error);
     res.status(500).json({
@@ -146,7 +185,8 @@ export const getAllcounselor  = async (req: Request, res: Response): Promise<voi
       message: "Internal Server Error",
     });
   }
-}
+};
+
 
 export const getCounselorById  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {      
@@ -201,6 +241,40 @@ export const getUserForSidebar = async (req: AuthenticatedRequest, res: Response
 
   } catch (error) {
     console.error('Error fetching users for sidebar:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const postAvailability = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+ try {
+    const userId = req.user?.id;
+    const { scheduleAt, scheduleTimes } = req.body;
+
+    if (!userId || !scheduleAt || !Array.isArray(scheduleTimes)) {
+      res.status(400).json({ message: 'Invalid request data' });
+      return;
+    }
+
+    const result = await ScheduleMasterModel.findOneAndUpdate(
+      { userId },
+      {
+        userId,
+        scheduleAt,
+        scheduleTimes,
+      },
+      {
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true,
+      }
+    );
+
+   res.json({
+     status_code:201,
+     message: 'Schedule saved successfully',
+   });
+  } catch (error) {
+    console.error('Error saving availability:', error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };

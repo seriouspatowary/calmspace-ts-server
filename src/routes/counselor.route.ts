@@ -1,6 +1,6 @@
 import express from "express";
 import fetchuser from "../middleware/fetchUser";
-import { getAllcounselor, updateInfo, toggleCounselorStatus, getCounselorById,editInfo, getUserForSidebar } from "../controllers/counselor.controller";
+import { getAllcounselor, updateInfo, toggleCounselorStatus, getCounselorById,editInfo, getUserForSidebar,postAvailability } from "../controllers/counselor.controller";
 import isVerifiedCounselor from "../middleware/isVerifiedCounselor";
 
 const router = express.Router();
@@ -11,6 +11,6 @@ router.post("/Updateonline", fetchuser, isVerifiedCounselor, toggleCounselorStat
 router.get("/counselorbyid",fetchuser,isVerifiedCounselor, getCounselorById)
 router.put("/edit-info", fetchuser, isVerifiedCounselor, editInfo);
 router.get("/getuserforsidebar" ,fetchuser, isVerifiedCounselor, getUserForSidebar)
-
+router.post("/set-availabilty", fetchuser, isVerifiedCounselor, postAvailability);
 
 export default router;
