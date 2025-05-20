@@ -248,9 +248,9 @@ export const getUserForSidebar = async (req: AuthenticatedRequest, res: Response
 export const postAvailability = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
  try {
     const userId = req.user?.id;
-    const { scheduleAt, scheduleTimes } = req.body;
+    const { scheduleAt, scheduleTimes, meetLink} = req.body;
 
-    if (!userId || !scheduleAt || !Array.isArray(scheduleTimes)) {
+    if (!userId || !scheduleAt || !meetLink || !Array.isArray(scheduleTimes)) {
       res.status(400).json({ message: 'Invalid request data' });
       return;
     }
@@ -261,6 +261,7 @@ export const postAvailability = async (req: AuthenticatedRequest, res: Response)
         userId,
         scheduleAt,
         scheduleTimes,
+        meetLink
       },
       {
         new: true,

@@ -12,6 +12,9 @@ export class ScheduleMaster {
   @prop({ type: () => [String], required: true })
   scheduleTimes!: string[];
 
+  @prop({ required: true })
+  meetLink!: String;
+
   @prop({ default: () => new Date() })
   createdAt!: Date;
 
