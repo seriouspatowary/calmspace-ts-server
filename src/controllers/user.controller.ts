@@ -83,9 +83,9 @@ export const getWeeklyUserCounts = async (req: Request, res: Response): Promise<
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, email, age, password, gender, role } = req.body;
+    const { email, password,  role } = req.body;
 
-    if (!name || !email || !age || !password || !gender || !role) {
+    if (!email || !password || !role) {
       res.json({
         status_code: 400,
         error: "Required fields missing",
@@ -106,7 +106,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     const salt = await bcrypt.genSalt(10);
     const securePassword = await bcrypt.hash(password, salt);
 
-    const newUser = new UserModel({ name, email, age, gender, role, password: securePassword });
+    const newUser = new UserModel({ email, role, password: securePassword });
     await newUser.save();
 
     res.json({

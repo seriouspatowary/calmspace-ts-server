@@ -6,7 +6,7 @@ import { prop, getModelForClass, modelOptions } from "@typegoose/typegoose";
   },
 })
 export class User {
-  @prop({ required: true })
+  @prop()
   name!: string;
 
   @prop({ required: true, unique: true })
@@ -15,7 +15,7 @@ export class User {
   @prop({ required: true })
   password!: string;
 
-  @prop({ required: true })
+  @prop()
   age!: number;
 
   @prop({
@@ -27,7 +27,7 @@ export class User {
   @prop({ enum: ["user", "counselor"], default: "user" })
   role!: "user" | "counselor";
 
-  @prop({ required: true })
+  @prop()
   gender!: string;
 
   @prop({ default: false })
