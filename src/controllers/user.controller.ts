@@ -14,7 +14,11 @@ import OtpModel from "../models/Otp";
 import ProgressBarModel from "../models/ProgressBar";
 import UserPromptModel from "../models/Promt";
 import VerificationMasterModel from "../models/VerificationMaster";
-import { Counselor } from "models/Counselor";
+import VideoCallOrderModel from "../models/VideoCallOrder";
+import { v4 as uuidv4 } from 'uuid';
+
+
+
 
 const jwtsecret = process.env.JWT_SECRET as string;
 const otpsecret = process.env.OTP_SECRET as string
@@ -456,4 +460,86 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
       error
     });
   }
-}
+ }
+
+
+export const bookAppointment = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+   
+  const userId = req.user?.id;
+  const {
+    counselorId,
+    counselorName,
+    scheduleDate,
+    scheduleTime,
+    meetLink,
+  } = req.body;
+
+  if (!userId || !counselorId || !counselorName || !scheduleDate || !scheduleTime || !meetLink) {
+    res.status(400).json({
+      status_code: 400,
+      message: "Missing required fields",
+    });
+    return;
+  }
+
+  try {
+    const orderId = `CS-${uuidv4()}`;
+
+    const appointment = new VideoCallOrderModel({
+      userId: userId,
+      counselorId: counselorId,
+      counselorName,
+      scheduleDate: new Date(scheduleDate),
+      scheduleTime,
+      meetLink,
+      orderId,
+    });
+
+    const savedAppointment = await appointment.save();
+
+    if (savedAppointment && savedAppointment._id) {
+      res.status(201).json({
+        status_code: 201,
+        message: "Appointment booked successfully",
+      });
+    } else {
+      res.status(500).json({
+        status_code: 500,
+        message: "Failed to save appointment",
+      });
+    }
+  } catch (error) {
+    console.error("Error booking appointment:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Error booking appointment",
+    });
+  }
+};
+
+
+export const getAppointments = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({
+      status_code: 401,
+      message: "Unauthorized: User ID not found",
+    });
+    return;
+  }
+
+  try {
+    const appointments = await VideoCallOrderModel.find({ userId }).sort({ createdAt: -1 }); 
+
+    res.status(200).json({
+      data: appointments,
+    });
+  } catch (error) {
+    console.error("Error retrieving appointments:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Error retrieving appointments",
+    });
+  }
+};
