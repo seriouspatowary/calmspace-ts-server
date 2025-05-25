@@ -130,25 +130,6 @@ export const toggleCounselorStatus = async (req: AuthenticatedRequest, res: Resp
 
 
 
-// export const getAllcounselor  = async (req: Request, res: Response): Promise<void> => {
-//   try {      
-//       const counselors = await CounselorModel.find()
-//       .populate({
-//         path: "counselorId",
-//         select: "-password", 
-//       })
-//       .populate("priceId"); 
-    
-//       res.status(201).json(counselors);
-
-//   } catch (error) {
-//     console.error("Error in getAllcounselor:", error);
-//     res.status(500).json({
-//       status_code: 500,
-//       message: "Internal Server Error",
-//     });
-//   }
-// }
 
 export const getAllcounselor = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -186,6 +167,55 @@ export const getAllcounselor = async (req: Request, res: Response): Promise<void
     });
   }
 };
+
+// export const getAllcounselor = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const page = parseInt(req.query.page as string) || 1;
+//     const limit = parseInt(req.query.limit as string) || 10; // default: 10 per page
+//     const skip = (page - 1) * limit;
+
+//     // Get total count
+//     const totalCounselors = await CounselorModel.countDocuments();
+
+//     // Fetch paginated counselors
+//     const counselors = await CounselorModel.find()
+//       .skip(skip)
+//       .limit(limit)
+//       .populate({
+//         path: "counselorId",
+//         select: "-password",
+//       })
+//       .populate("priceId")
+//       .lean();
+
+//     // Fetch all schedules once (could optimize if schedules are large)
+//     const schedules = await ScheduleMasterModel.find().lean();
+//     const scheduleMap = new Map(schedules.map((sched) => [sched.userId.toString(), sched]));
+
+//     const enrichedCounselors = counselors.map((counselor) => {
+//       const userId = counselor.counselorId?._id?.toString();
+//       return {
+//         ...counselor,
+//         schedule: userId ? scheduleMap.get(userId) || null : null,
+//       };
+//     });
+
+//     res.status(200).json({
+//       currentPage: page,
+//       totalPages: Math.ceil(totalCounselors / limit),
+//       totalItems: totalCounselors,
+//       itemsPerPage: limit,
+//       data: enrichedCounselors,
+//     });
+//   } catch (error) {
+//     console.error("Error in getAllcounselor:", error);
+//     res.status(500).json({
+//       status_code: 500,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
+
 
 
 export const getCounselorById  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -279,3 +309,73 @@ export const postAvailability = async (req: AuthenticatedRequest, res: Response)
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+
+export const getcounselorByPreference = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { language, minPrice, maxPrice, experience } = req.query;
+
+    const counselors = await CounselorModel.find()
+      .populate({
+        path: "counselorId",
+        select: "-password",
+      })
+      .populate("priceId")
+      .lean();
+
+    const schedules = await ScheduleMasterModel.find().lean();
+
+    const scheduleMap = new Map(
+      schedules.map((sched) => [sched.userId.toString(), sched])
+    );
+
+    const enrichedCounselors = counselors.map((counselor) => {
+      const userId = (counselor.counselorId as any)?._id?.toString();
+      return {
+        ...counselor,
+        schedule: userId ? scheduleMap.get(userId) || null : null,
+      };
+    });
+
+    const filtered = enrichedCounselors.filter((counselor) => {
+      // Match language
+      const matchesLanguage = language
+        ? (counselor.languages ?? [])
+            .map((l: string) => l.toLowerCase())
+            .includes(String(language).toLowerCase())
+        : true;
+
+      // Match price range
+      const matchesPrice =
+        minPrice || maxPrice
+          ? ["chat", "audio", "video"].some((mode) => {
+              const priceObj = counselor.priceId as Record<string, number> | undefined;
+              const price = priceObj?.[mode];
+
+              if (typeof price !== "number") return false;
+
+              const min = minPrice ? Number(minPrice) : 0;
+              const max = maxPrice ? Number(maxPrice) : Infinity;
+
+              return price >= min && price <= max;
+            })
+          : true;
+
+       const matchesExperience = experience
+    ? Number(counselor.experience) >= Number(experience)
+    : true;
+
+
+      return matchesLanguage && matchesPrice && matchesExperience;
+    });
+
+    res.status(200).json(filtered);
+  } catch (error) {
+    console.error("Error in getcounselorByPreference:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Internal Server Error",
+    });
+  }
+};
+
