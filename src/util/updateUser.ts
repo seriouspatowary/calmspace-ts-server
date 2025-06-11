@@ -35,9 +35,9 @@ async function updateUsersWithHashedPassword() {
       }
     );
 
-    console.log(`✅ Updated ${result.modifiedCount} users`);
+    console.log(`Updated ${result.modifiedCount} users`);
   } catch (error) {
-    console.error("❌ Error updating users:", error);
+    console.error("Error updating users:", error);
   } finally {
     mongoose.connection.close();
   }

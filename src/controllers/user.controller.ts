@@ -149,23 +149,21 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
         return 
     }
 
-   // Check verification status
-    const verification = await VerificationMasterModel.findOne({
-      userId: userExists._id,
-      adminVerified: true,
-    });
+   
+    const { name, age, gender, profileMaking, role, _id } = userExists;
 
-    const isVerified = !!verification; 
+    const isComplete = !!(name && age && gender);
 
-    const authToken = jwt.sign({ id: userExists._id }, jwtsecret, { expiresIn: "10d" });
+
+    const authToken = jwt.sign({ id: _id }, jwtsecret, { expiresIn: "10d" });
 
    res.json({
       status_code: 200,
-      profileStatus: userExists.profileMaking,
-      role: userExists.role,
-      user:userExists._id,
+      profileStatus: profileMaking,
+      role,
+      user:_id,
       authToken,
-      isVerified
+      isComplete
       
     });
   } catch (error) {
@@ -540,6 +538,49 @@ export const getAppointments = async (req: AuthenticatedRequest, res: Response):
     res.status(500).json({
       status_code: 500,
       message: "Error retrieving appointments",
+    });
+  }
+};
+
+
+export const updateProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { name, age, gender } = req.body;
+
+    if (!name || !age || !gender) {
+      res.status(400).json({
+        status_code: 400,
+        message:"Missing Required Fields"
+      });
+      return;
+   }
+
+    const user = await UserModel.findById(userId);
+
+    if (!user) {
+      res.status(404).json({
+        status_code: 404,
+        error: 'User not found',
+      });
+      return;
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      userId,
+      { name, age, gender },
+      { new: true }
+    );
+
+    res.status(200).json({
+      status_code: 200,
+      message: 'Profile updated successfully'
+    });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Error updating profile",
     });
   }
 };

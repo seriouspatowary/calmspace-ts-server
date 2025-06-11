@@ -1,7 +1,7 @@
 import express from "express";
 import {
     registerUser, loginUser, makeProfile, sendOtp, verifyOtp, resetPassword, getUser,
-    postUserPromt, getWeeklyUserCounts, bookAppointment,getAppointments
+    postUserPromt, getWeeklyUserCounts, bookAppointment,getAppointments,updateProfile
 } from "../controllers/user.controller";
 import fetchUser from "../middleware/fetchUser";
 import checkToken from "../middleware/checkToken";
@@ -20,6 +20,8 @@ router.post("/user-promt", fetchUser, postUserPromt);
 router.get("/count", getWeeklyUserCounts);
 router.post("/book-appointment", fetchUser, bookAppointment);
 router.get("/appointment", fetchUser, getAppointments)
+router.post("/update-profile", fetchUser, updateProfile);
+
 
 
 export default router;
