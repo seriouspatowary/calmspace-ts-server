@@ -383,6 +383,11 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
       return;
     }
 
+    const { name, age, gender } = user;
+
+    const isComplete = !!(name && age && gender);
+
+
     const progress = await ProgressBarModel.findOne({ userId }).select("QuestionScore");
 
     res.json({
@@ -390,6 +395,7 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
       message: "User data retrieved successfully",
       user: user,
       questionScore: progress ? progress.QuestionScore : null,
+      isComplete
     });
 
     
