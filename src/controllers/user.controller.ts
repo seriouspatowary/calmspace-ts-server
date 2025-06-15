@@ -373,6 +373,7 @@ export const resetPassword = async (req: AuthenticatedRequest, res: Response): P
 export const getUser  = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+
     const user = await UserModel.findById(userId).select("-password");
 
     if (!user) {
@@ -387,6 +388,15 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
 
     const isComplete = !!(name && age && gender);
 
+    const verification = await VerificationMasterModel.findOne({ userId });
+
+    let adminVerified = false;
+
+    if (verification) {
+      adminVerified = verification.adminVerified;
+    }
+
+
 
     const progress = await ProgressBarModel.findOne({ userId }).select("QuestionScore");
 
@@ -395,7 +405,8 @@ export const getUser  = async (req: AuthenticatedRequest, res: Response): Promis
       message: "User data retrieved successfully",
       user: user,
       questionScore: progress ? progress.QuestionScore : null,
-      isComplete
+      isComplete,
+      adminVerified
     });
 
     
