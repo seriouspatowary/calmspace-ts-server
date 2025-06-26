@@ -311,6 +311,8 @@ export const postAvailability = async (req: AuthenticatedRequest, res: Response)
 };
 
 
+
+
 export const getcounselorByPreference = async (req: Request, res: Response): Promise<void> => {
   try {
     const { language, minPrice, maxPrice, experience } = req.query;

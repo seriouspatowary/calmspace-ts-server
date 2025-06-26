@@ -1,6 +1,5 @@
 import { prop, getModelForClass, modelOptions } from '@typegoose/typegoose';
 
-// 1. Article Content Class
 class ArticleContent {
   @prop()
   public title?: string;
@@ -9,7 +8,6 @@ class ArticleContent {
   public body?: string;
 }
 
-// 2. Main Article Class
 @modelOptions({
   schemaOptions: {
     collection: 'articles', 

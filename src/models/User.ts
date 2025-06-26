@@ -40,6 +40,5 @@ export class User {
   createdAt?: Date;
 }
 
-// ✅ Export the model
 const UserModel = getModelForClass(User);
 export default UserModel;
