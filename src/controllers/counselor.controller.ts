@@ -133,13 +133,24 @@ export const toggleCounselorStatus = async (req: AuthenticatedRequest, res: Resp
 
 export const getAllcounselor = async (req: Request, res: Response): Promise<void> => {
   try {
+    // Get pagination parameters with default values
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit;
+
+    // Total count for pagination metadata
+    const totalCount = await CounselorModel.countDocuments();
+
+    // Fetch paginated counselors
     const counselors = await CounselorModel.find()
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: "counselorId",
         select: "-password",
       })
       .populate("priceId")
-      .lean(); // to allow modification of results
+      .lean();
 
     // Fetch all schedules
     const schedules = await ScheduleMasterModel.find().lean();
@@ -158,7 +169,16 @@ export const getAllcounselor = async (req: Request, res: Response): Promise<void
       };
     });
 
-    res.status(200).json(enrichedCounselors);
+    // Respond with data and pagination info
+    res.status(200).json({
+      data: enrichedCounselors,
+      meta: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
   } catch (error) {
     console.error("Error in getAllcounselor:", error);
     res.status(500).json({
@@ -167,54 +187,6 @@ export const getAllcounselor = async (req: Request, res: Response): Promise<void
     });
   }
 };
-
-// export const getAllcounselor = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     const page = parseInt(req.query.page as string) || 1;
-//     const limit = parseInt(req.query.limit as string) || 10; // default: 10 per page
-//     const skip = (page - 1) * limit;
-
-//     // Get total count
-//     const totalCounselors = await CounselorModel.countDocuments();
-
-//     // Fetch paginated counselors
-//     const counselors = await CounselorModel.find()
-//       .skip(skip)
-//       .limit(limit)
-//       .populate({
-//         path: "counselorId",
-//         select: "-password",
-//       })
-//       .populate("priceId")
-//       .lean();
-
-//     // Fetch all schedules once (could optimize if schedules are large)
-//     const schedules = await ScheduleMasterModel.find().lean();
-//     const scheduleMap = new Map(schedules.map((sched) => [sched.userId.toString(), sched]));
-
-//     const enrichedCounselors = counselors.map((counselor) => {
-//       const userId = counselor.counselorId?._id?.toString();
-//       return {
-//         ...counselor,
-//         schedule: userId ? scheduleMap.get(userId) || null : null,
-//       };
-//     });
-
-//     res.status(200).json({
-//       currentPage: page,
-//       totalPages: Math.ceil(totalCounselors / limit),
-//       totalItems: totalCounselors,
-//       itemsPerPage: limit,
-//       data: enrichedCounselors,
-//     });
-//   } catch (error) {
-//     console.error("Error in getAllcounselor:", error);
-//     res.status(500).json({
-//       status_code: 500,
-//       message: "Internal Server Error",
-//     });
-//   }
-// };
 
 
 
