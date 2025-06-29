@@ -290,18 +290,12 @@ export const getcounselorByPreference = async (req: Request, res: Response): Pro
     const { language, minPrice, maxPrice, experience } = req.query;
 
     const counselors = await CounselorModel.find()
-      .populate({
-        path: "counselorId",
-        select: "-password",
-      })
+      .populate({ path: "counselorId", select: "-password" })
       .populate("priceId")
       .lean();
 
     const schedules = await ScheduleMasterModel.find().lean();
-
-    const scheduleMap = new Map(
-      schedules.map((sched) => [sched.userId.toString(), sched])
-    );
+    const scheduleMap = new Map(schedules.map(sched => [sched.userId.toString(), sched]));
 
     const enrichedCounselors = counselors.map((counselor) => {
       const userId = (counselor.counselorId as any)?._id?.toString();
@@ -311,39 +305,70 @@ export const getcounselorByPreference = async (req: Request, res: Response): Pro
       };
     });
 
-    const filtered = enrichedCounselors.filter((counselor) => {
-      // Match language
+    const min = minPrice ? Number(minPrice) : 0;
+    const max = maxPrice ? Number(maxPrice) : Infinity;
+    const exp = experience ? Number(experience) : 0;
+
+    const allMatches = enrichedCounselors.filter((counselor) => {
       const matchesLanguage = language
-        ? (counselor.languages ?? [])
-            .map((l: string) => l.toLowerCase())
-            .includes(String(language).toLowerCase())
+        ? (counselor.languages ?? []).map((l: string) => l.toLowerCase()).includes(String(language).toLowerCase())
         : true;
 
-      // Match price range
-      const matchesPrice =
-        minPrice || maxPrice
-          ? ["chat", "audio", "video"].some((mode) => {
-              const priceObj = counselor.priceId as Record<string, number> | undefined;
-              const price = priceObj?.[mode];
+      const matchesPrice = ["chat", "audio", "video"].some((mode) => {
+        const priceObj = counselor.priceId as Record<string, number> | undefined;
+        const price = priceObj?.[mode];
+        return typeof price === "number" && price >= min && price <= max;
+      });
 
-              if (typeof price !== "number") return false;
-
-              const min = minPrice ? Number(minPrice) : 0;
-              const max = maxPrice ? Number(maxPrice) : Infinity;
-
-              return price >= min && price <= max;
-            })
-          : true;
-
-       const matchesExperience = experience
-    ? Number(counselor.experience) >= Number(experience)
-    : true;
-
+      const matchesExperience = Number(counselor.experience) >= exp;
 
       return matchesLanguage && matchesPrice && matchesExperience;
     });
 
-    res.status(200).json(filtered);
+    // If enough matches, return top 5
+    if (allMatches.length >= 5) {
+      res.status(200).json(allMatches.slice(0, 5));
+      return;
+    }
+
+    const matchedIds = new Set(allMatches.map((c) => c._id.toString()));
+
+    // Relaxed match: only language
+    const languageMatches = enrichedCounselors.filter((counselor) => {
+      const id = counselor._id.toString();
+      if (matchedIds.has(id)) return false;
+      return language
+        ? (counselor.languages ?? []).map((l: string) => l.toLowerCase()).includes(String(language).toLowerCase())
+        : false;
+    });
+
+    languageMatches.forEach((c) => matchedIds.add(c._id.toString()));
+
+    // Relaxed match: only price
+    const priceMatches = enrichedCounselors.filter((counselor) => {
+      const id = counselor._id.toString();
+      if (matchedIds.has(id)) return false;
+      return ["chat", "audio", "video"].some((mode) => {
+        const priceObj = counselor.priceId as Record<string, number> | undefined;
+        const price = priceObj?.[mode];
+        return typeof price === "number" && price >= min && price <= max;
+      });
+    });
+
+    priceMatches.forEach((c) => matchedIds.add(c._id.toString()));
+
+    // Fallback: any other counselors to fill up
+    const filler = enrichedCounselors.filter((c) => !matchedIds.has(c._id.toString()));
+
+    // Merge results
+    const combined = [
+      ...allMatches,
+      ...languageMatches,
+      ...priceMatches,
+      ...filler,
+    ].slice(0, 5); // Ensure only 5 returned
+
+    res.status(200).json(combined);
   } catch (error) {
     console.error("Error in getcounselorByPreference:", error);
     res.status(500).json({
