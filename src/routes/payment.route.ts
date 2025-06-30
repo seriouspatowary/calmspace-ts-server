@@ -10,7 +10,7 @@ router.get("/paymentstatus/:counselorId", fetchuser, getPaymentStatus)
 
 // phonepay
 router.post("/mobile/initiate", fetchuser, initiatePhonePePayment);
-router.post("/api/payment/callback",fetchuser, handlePhonePeCallback);
+router.post("/callback",fetchuser, handlePhonePeCallback);
 router.get("/api/payment/status/:transactionId", fetchuser, checkPhonePePaymentStatus);
 
 

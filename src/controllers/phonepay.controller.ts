@@ -15,6 +15,8 @@ const {
   BACKEND_SERVER_URL
 } = process.env;
 
+
+
 function calculateXVerify(
   payloadBase64: string,
   endpoint: string,

@@ -4,6 +4,7 @@
   "description": "",
   "main": "app.js",
   "scripts": {
+    "preinstall": "npx npm-force-resolutions",
     "dev": "nodemon",
     "build": "node --max-old-space-size=1024 ./node_modules/typescript/bin/tsc",
     "start": "npm run build && node --max-old-space-size=1024 dist/app.js"
@@ -11,6 +12,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "resolutions": {
+    "brace-expansion": "^1.1.12"
+  },
   "dependencies": {
     "@typegoose/typegoose": "^12.14.0",
     "@types/express": "^5.0.0",
@@ -35,6 +39,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/mongoose": "^5.11.97",
     "@types/nodemailer": "^6.4.17",
+    "npm-force-resolutions": "^0.0.10",
     "typescript": "^5.8.2"
   }
 }
