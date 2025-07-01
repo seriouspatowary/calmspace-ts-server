@@ -12,9 +12,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.postUserPromt = exports.getUser = exports.resetPassword = exports.verifyOtp = exports.sendOtp = exports.makeProfile = exports.loginUser = exports.registerUser = void 0;
+exports.updateProfile = exports.getAppointments = exports.bookAppointment = exports.postUserPromt = exports.getUser = exports.resetPassword = exports.verifyOtp = exports.sendOtp = exports.makeProfile = exports.loginUser = exports.registerUser = exports.getWeeklyUserCounts = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+const path_1 = __importDefault(require("path"));
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../../', '.env') });
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const User_1 = __importDefault(require("../models/User"));
@@ -23,12 +24,63 @@ const Otp_1 = __importDefault(require("../models/Otp"));
 const ProgressBar_1 = __importDefault(require("../models/ProgressBar"));
 const Promt_1 = __importDefault(require("../models/Promt"));
 const VerificationMaster_1 = __importDefault(require("../models/VerificationMaster"));
+const VideoCallOrder_1 = __importDefault(require("../models/VideoCallOrder"));
+const uuid_1 = require("uuid");
 const jwtsecret = process.env.JWT_SECRET;
 const otpsecret = process.env.OTP_SECRET;
+const getWeeklyUserCounts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const weeklyData = yield User_1.default.aggregate([
+            {
+                $match: {
+                    createdAt: { $exists: true },
+                },
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$createdAt" },
+                        week: { $isoWeek: "$createdAt" },
+                    },
+                    totalUsers: { $sum: 1 },
+                },
+            },
+            {
+                $sort: { "_id.year": 1, "_id.week": 1 },
+            },
+        ]);
+        const result = weeklyData.map((entry, index) => {
+            const previous = weeklyData[index - 1];
+            const currentCount = entry.totalUsers;
+            const previousCount = previous ? previous.totalUsers : 0;
+            let percentChange = null;
+            if (previousCount === 0) {
+                percentChange = null; // Or define as 100 if currentCount > 0
+            }
+            else {
+                percentChange = ((currentCount - previousCount) / previousCount) * 100;
+                percentChange = Math.min(Math.max(percentChange, -100), 100); // Clamp between -100% and 100%
+                percentChange = Math.round(percentChange * 100) / 100; // Round to 2 decimals
+            }
+            return {
+                year: entry._id.year,
+                week: entry._id.week,
+                totalUsers: currentCount,
+                percentChangeFromPreviousWeek: percentChange,
+            };
+        });
+        res.json({ result });
+    }
+    catch (error) {
+        console.error("Error in getWeeklyUserCounts:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+});
+exports.getWeeklyUserCounts = getWeeklyUserCounts;
 const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { name, email, age, password, gender, role } = req.body;
-        if (!name || !email || !age || !password || !gender || !role) {
+        const { email, password, role } = req.body;
+        if (!email || !password || !role) {
             res.json({
                 status_code: 400,
                 error: "Required fields missing",
@@ -46,7 +98,7 @@ const registerUser = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         }
         const salt = yield bcryptjs_1.default.genSalt(10);
         const securePassword = yield bcryptjs_1.default.hash(password, salt);
-        const newUser = new User_1.default({ name, email, age, gender, role, password: securePassword });
+        const newUser = new User_1.default({ email, role, password: securePassword });
         yield newUser.save();
         res.json({
             status_code: 201,
@@ -81,19 +133,16 @@ const loginUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
-        // Check verification status
-        const verification = yield VerificationMaster_1.default.findOne({
-            userId: userExists._id,
-            adminVerified: true,
-        });
-        const isVerified = !!verification;
-        const authToken = jsonwebtoken_1.default.sign({ id: userExists._id }, jwtsecret, { expiresIn: "10d" });
+        const { name, age, gender, profileMaking, role, _id } = userExists;
+        const isComplete = !!(name && age && gender);
+        const authToken = jsonwebtoken_1.default.sign({ id: _id }, jwtsecret, { expiresIn: "10d" });
         res.json({
             status_code: 200,
-            profileStatus: userExists.profileMaking,
-            role: userExists.role,
+            profileStatus: profileMaking,
+            role,
+            user: _id,
             authToken,
-            isVerified
+            isComplete
         });
     }
     catch (error) {
@@ -285,12 +334,21 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
             return;
         }
+        const { name, age, gender } = user;
+        const isComplete = !!(name && age && gender);
+        const verification = yield VerificationMaster_1.default.findOne({ userId });
+        let adminVerified = false;
+        if (verification) {
+            adminVerified = verification.adminVerified;
+        }
         const progress = yield ProgressBar_1.default.findOne({ userId }).select("QuestionScore");
         res.json({
             status_code: 200,
             message: "User data retrieved successfully",
             user: user,
             questionScore: progress ? progress.QuestionScore : null,
+            isComplete,
+            adminVerified
         });
     }
     catch (error) {
@@ -349,4 +407,109 @@ const postUserPromt = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 exports.postUserPromt = postUserPromt;
+const bookAppointment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    const { counselorId, counselorName, scheduleDate, scheduleTime, meetLink, } = req.body;
+    if (!userId || !counselorId || !counselorName || !scheduleDate || !scheduleTime || !meetLink) {
+        res.status(400).json({
+            status_code: 400,
+            message: "Missing required fields",
+        });
+        return;
+    }
+    try {
+        const orderId = `CS-${(0, uuid_1.v4)()}`;
+        const appointment = new VideoCallOrder_1.default({
+            userId: userId,
+            counselorId: counselorId,
+            counselorName,
+            scheduleDate: new Date(scheduleDate),
+            scheduleTime,
+            meetLink,
+            orderId,
+        });
+        const savedAppointment = yield appointment.save();
+        if (savedAppointment && savedAppointment._id) {
+            res.status(201).json({
+                status_code: 201,
+                message: "Appointment booked successfully",
+            });
+        }
+        else {
+            res.status(500).json({
+                status_code: 500,
+                message: "Failed to save appointment",
+            });
+        }
+    }
+    catch (error) {
+        console.error("Error booking appointment:", error);
+        res.status(500).json({
+            status_code: 500,
+            message: "Error booking appointment",
+        });
+    }
+});
+exports.bookAppointment = bookAppointment;
+const getAppointments = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    if (!userId) {
+        res.status(401).json({
+            status_code: 401,
+            message: "Unauthorized: User ID not found",
+        });
+        return;
+    }
+    try {
+        const appointments = yield VideoCallOrder_1.default.find({ userId }).sort({ createdAt: -1 });
+        res.status(200).json({
+            data: appointments,
+        });
+    }
+    catch (error) {
+        console.error("Error retrieving appointments:", error);
+        res.status(500).json({
+            status_code: 500,
+            message: "Error retrieving appointments",
+        });
+    }
+});
+exports.getAppointments = getAppointments;
+const updateProfile = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        const { name, age, gender } = req.body;
+        if (!name || !age || !gender) {
+            res.status(400).json({
+                status_code: 400,
+                message: "Missing Required Fields"
+            });
+            return;
+        }
+        const user = yield User_1.default.findById(userId);
+        if (!user) {
+            res.status(404).json({
+                status_code: 404,
+                error: 'User not found',
+            });
+            return;
+        }
+        const updatedUser = yield User_1.default.findByIdAndUpdate(userId, { name, age, gender }, { new: true });
+        res.status(200).json({
+            status_code: 200,
+            message: 'Profile updated successfully'
+        });
+    }
+    catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({
+            status_code: 500,
+            message: "Error updating profile",
+        });
+    }
+});
+exports.updateProfile = updateProfile;
 //# sourceMappingURL=user.controller.js.map

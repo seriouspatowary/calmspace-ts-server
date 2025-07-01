@@ -17,5 +17,9 @@ router.post("/verify-otp", user_controller_1.verifyOtp);
 router.post("/reset-password", checkToken_1.default, user_controller_1.resetPassword);
 router.get("/user-data", fetchUser_1.default, user_controller_1.getUser);
 router.post("/user-promt", fetchUser_1.default, user_controller_1.postUserPromt);
+router.get("/count", user_controller_1.getWeeklyUserCounts);
+router.post("/book-appointment", fetchUser_1.default, user_controller_1.bookAppointment);
+router.get("/appointment", fetchUser_1.default, user_controller_1.getAppointments);
+router.post("/update-profile", fetchUser_1.default, user_controller_1.updateProfile);
 exports.default = router;
 //# sourceMappingURL=user.route.js.map

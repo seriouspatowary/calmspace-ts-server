@@ -15,7 +15,7 @@ let User = class User {
 };
 exports.User = User;
 __decorate([
-    (0, typegoose_1.prop)({ required: true }),
+    (0, typegoose_1.prop)(),
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
 __decorate([
@@ -27,7 +27,7 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "password", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ required: true }),
+    (0, typegoose_1.prop)(),
     __metadata("design:type", Number)
 ], User.prototype, "age", void 0);
 __decorate([
@@ -41,7 +41,7 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
 __decorate([
-    (0, typegoose_1.prop)({ required: true }),
+    (0, typegoose_1.prop)(),
     __metadata("design:type", String)
 ], User.prototype, "gender", void 0);
 __decorate([
@@ -63,7 +63,6 @@ exports.User = User = __decorate([
         },
     })
 ], User);
-// ✅ Export the model
 const UserModel = (0, typegoose_1.getModelForClass)(User);
 exports.default = UserModel;
 //# sourceMappingURL=User.js.map

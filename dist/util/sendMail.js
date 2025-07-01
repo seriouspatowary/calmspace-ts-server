@@ -14,7 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+const path_1 = __importDefault(require("path"));
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../../', '.env') });
 const transporter = nodemailer_1.default.createTransport({
     service: 'gmail',
     secure: true,
@@ -38,7 +39,7 @@ const sendCustomEmail = (toEmail, subject, htmlTemplate) => __awaiter(void 0, vo
     };
     try {
         const info = yield transporter.sendMail(mailOptions);
-        console.log('Email sent:', info.response);
+        // console.log('Email sent:', info.response);
     }
     catch (error) {
         console.error('Failed to send email:', error);

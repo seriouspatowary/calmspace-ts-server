@@ -10,7 +10,6 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const typegoose_1 = require("@typegoose/typegoose");
-// 1. Article Content Class
 class ArticleContent {
 }
 __decorate([
@@ -21,7 +20,6 @@ __decorate([
     (0, typegoose_1.prop)(),
     __metadata("design:type", String)
 ], ArticleContent.prototype, "body", void 0);
-// 2. Main Article Class
 let Article = class Article {
 };
 __decorate([
