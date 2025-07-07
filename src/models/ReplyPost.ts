@@ -6,20 +6,24 @@ import {
   Severity,
 } from '@typegoose/typegoose'
 import { User } from './User'
+import {Post} from './Comunity'
 
 @modelOptions({
   options: {
     allowMixed: Severity.ALLOW,
   },
 })
-export class Post {
+class ReplyPost {
   @prop({ ref: () => User, required: true })
   public userId!: Ref<User>
+
+  @prop({ ref: () => Post, required: true })
+  public postId!: Ref<Post> // Link to original Post
 
   @prop({ required: true })
   public text!: string
 
-  // Reactions as a single string field (e.g., "like", "love", etc.)
+  // Reactions as a single string
   @prop({ default: 'like', enum: ['like', 'love', 'laugh', 'wow', 'sad', 'angry'] })
   public reactions!: string
 
@@ -30,8 +34,8 @@ export class Post {
   public updatedAt?: Date
 }
 
-const PostModel = getModelForClass(Post, {
+const ReplyPostModel = getModelForClass(ReplyPost, {
   schemaOptions: { timestamps: true },
 })
 
-export default PostModel
+export default ReplyPostModel
