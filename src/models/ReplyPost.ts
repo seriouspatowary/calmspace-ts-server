@@ -24,8 +24,9 @@ class ReplyPost {
   public text!: string
 
   // Reactions as a single string
-  @prop({ default: 'like', enum: ['like', 'love', 'laugh', 'wow', 'sad', 'angry'] })
-  public reactions!: string
+  @prop({ type: String, enum: ['like', 'dislike'], default: null })
+  public reactions?: 'like' | 'dislike' | null
+  
 
   @prop({ default: Date.now })
   public createdAt?: Date

@@ -20,9 +20,9 @@ export class Post {
   public text!: string
 
   // Reactions as a single string field (e.g., "like", "love", etc.)
-  @prop({ default: 'like', enum: ['like', 'love', 'laugh', 'wow', 'sad', 'angry'] })
-  public reactions!: string
-
+  @prop({ type: String, enum: ['like', 'dislike'], default: null })
+  public reactions?: 'like' | 'dislike' | null
+  
   @prop({ default: Date.now })
   public createdAt?: Date
 

@@ -116,3 +116,29 @@ export const fetchReplies = async (req: AuthenticatedRequest, res: Response): Pr
         });
     }
 }
+
+
+export const addReactions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const {text,postId} = req.body;
+  const userId = req.user?.id;
+
+  try {
+  const replyPost = new ReplyPostModel({
+    userId: userId,
+    postId:postId,
+    text: text
+  })
+  
+  await replyPost.save();
+  res.json({
+    status_code:200,
+    message: "Reply has been sent Successfully",
+  });
+} catch (error) {
+  console.error("Error in sending Post:", error);
+  res.json({
+    status_code:500,
+    message: "Error in sending Post",
+  });
+}
+}
