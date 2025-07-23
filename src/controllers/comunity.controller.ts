@@ -118,15 +118,15 @@ export const fetchReplies = async (req: AuthenticatedRequest, res: Response): Pr
 }
 
 
+
+
 export const addReactions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const {text,postId} = req.body;
+  const {reaction} = req.body;
   const userId = req.user?.id;
 
   try {
   const replyPost = new ReplyPostModel({
-    userId: userId,
-    postId:postId,
-    text: text
+    userId: userId
   })
   
   await replyPost.save();

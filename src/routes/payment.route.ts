@@ -1,17 +1,16 @@
 import express from "express";
 import fetchuser from "../middleware/fetchUser";
 import { sendPayment, getPaymentStatus } from "../controllers/payment.controller";
-import { checkPhonePePaymentStatus, handlePhonePeCallback, initiatePhonePePayment } from "../controllers/phonepay.controller";
+import {  createOrder } from "../controllers/razorpay.controller";
 
 const router = express.Router();
 
 router.post("/send-payment/:id", fetchuser, sendPayment);
 router.get("/paymentstatus/:counselorId", fetchuser, getPaymentStatus)
 
-// phonepay
-router.post("/mobile/initiate", fetchuser, initiatePhonePePayment);
-router.post("/callback",fetchuser, handlePhonePeCallback);
-router.get("/api/payment/status/:transactionId", fetchuser, checkPhonePePaymentStatus);
+// razorpay
+router.post("/create-order", fetchuser, createOrder);
+
 
 
 export default router;
