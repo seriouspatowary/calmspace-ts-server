@@ -29,18 +29,20 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
 
     const order = await razorpay.orders.create(options);
     // Step 2: Store order in PaymentResponse collection
+
+    const amountInPaise = typeof order.amount === 'string' ? parseInt(order.amount) : order.amount;
+
     const paymentRecord = new PaymentRequestModel({
       userId:userId,
       transaction_id: order.id,
       razorpay_order_id: order.id,
       receipt: order.receipt,
-      payment_amount: Number(order.amount) / 100,
+      payment_amount: amountInPaise / 100,
       status: 'created', 
     });
 
     await paymentRecord.save();
 
-    // Step 3: Return response
     res.status(200).json({ success: true, order });
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
