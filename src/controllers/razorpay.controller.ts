@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import razorpay from '../util/razorpay';
 import crypto from 'crypto';
 import PaymentModel from '../models/Payment';
+import PaymentRequestModel from '../models/PaymentRequest';
 import PaymentResponseModel from '../models/PaymentResponse';
 
 interface AuthenticatedRequest extends Request {
@@ -27,7 +28,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
 
     const order = await razorpay.orders.create(options);
     // Step 2: Store order in PaymentResponse collection
-    const paymentRecord = new PaymentResponseModel({
+    const paymentRecord = new PaymentRequestModel({
       userId:userId,
       transaction_id: order.id,
       razorpay_order_id: order.id,
