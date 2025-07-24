@@ -1,7 +1,7 @@
 import express from "express";
 import fetchuser from "../middleware/fetchUser";
 import { sendPayment, getPaymentStatus } from "../controllers/payment.controller";
-import {  createOrder } from "../controllers/razorpay.controller";
+import {  createOrder,verifySignature } from "../controllers/razorpay.controller";
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.get("/paymentstatus/:counselorId", fetchuser, getPaymentStatus)
 
 // razorpay
 router.post("/create-order", fetchuser, createOrder);
-
+router.post("/verify-signaturer", fetchuser, verifySignature);
 
 
 export default router;
