@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import PostModel from "../models/Comunity";
 import ReplyPostModel from "../models/ReplyPost";
+import ReactionModel from "../models/Reaction";
 
 
 
@@ -120,25 +121,56 @@ export const fetchReplies = async (req: AuthenticatedRequest, res: Response): Pr
 
 
 
+
 export const addReactions = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  const {reaction} = req.body;
   const userId = req.user?.id;
+  const postId = req.params.postId;
+
+  if (!userId || !postId) {
+    res.status(400).json({ message: "Invalid request" });
+    return;
+  }
 
   try {
-  const replyPost = new ReplyPostModel({
-    userId: userId
-  })
-  
-  await replyPost.save();
-  res.json({
-    status_code:200,
-    message: "Reply has been sent Successfully",
-  });
-} catch (error) {
-  console.error("Error in sending Post:", error);
-  res.json({
-    status_code:500,
-    message: "Error in sending Post",
-  });
-}
-}
+    const existingReaction = await ReactionModel.findOne({ userId, postId });
+
+    if (!existingReaction) {
+      // No reaction → Add 'like'
+      const newReaction = await ReactionModel.create({ userId, postId, reactionType: 'like' });
+       res.json({
+        status_code: 201,
+        message: `Reaction 'like' added.`,
+        reactions: [newReaction],
+      });
+      return
+    }
+
+    if (existingReaction.reactionType === 'like') {
+      // Already 'like' → remove it
+      await ReactionModel.deleteOne({ _id: existingReaction._id });
+      res.json({
+        status_code: 200,
+        message: `Reaction 'like' removed.`,
+        reactions: [],
+      });
+      return
+    }
+
+    // Existing reaction is 'dislike' → update to 'like'
+    existingReaction.reactionType = 'like';
+    await existingReaction.save();
+    res.json({
+      status_code: 200,
+      message: `Reaction updated to 'like'`,
+      reactions: [existingReaction],
+    });
+    return
+
+  } catch (error) {
+    console.error("Error in toggling reaction:", error);
+    res.status(500).json({
+      status_code: 500,
+      message: "Internal server error",
+    });
+  }
+};

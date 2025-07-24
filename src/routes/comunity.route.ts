@@ -11,6 +11,6 @@ router.get("/post", fetchuser, getPost);
 
 router.post("/replypost", fetchuser, checkRole("counselor"), replyPost)
 router.get("/replies/:postid", fetchuser, fetchReplies);
-router.post("/add-reaction", fetchuser, addReactions)
+router.post("/add-reaction/:postId", fetchuser, addReactions)
 
 export default router;
