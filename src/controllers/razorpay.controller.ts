@@ -81,6 +81,7 @@ export const verifySignature = async (req: AuthenticatedRequest, res: Response):
         if (!existing) {
           const payment = new PaymentResponseModel({
             userId,
+            counselorId,
             transaction_id: razorpay_payment_id,
             razorpay_order_id,
             razorpay_signature,

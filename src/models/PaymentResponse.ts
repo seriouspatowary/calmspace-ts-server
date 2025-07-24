@@ -10,6 +10,9 @@ import { User } from './User';
 export class PaymentResponse {
   @prop({ ref: () => User, required: true })
   public userId!: Ref<User>;
+  
+  @prop({ ref: () => User })
+  public counselorId!: Ref<User>;
 
   @prop({ required: true })
   public transaction_id!: string; 
