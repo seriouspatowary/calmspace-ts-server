@@ -1,10 +1,11 @@
-// controllers/paymentController.ts
 import { Request, Response } from 'express';
 import razorpay from '../util/razorpay';
 import crypto from 'crypto';
-import PaymentModel from '../models/Payment';
 import PaymentRequestModel from '../models/PaymentRequest';
 import PaymentResponseModel from '../models/PaymentResponse';
+import { startChatSession } from "../util/startSession"
+
+
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -33,7 +34,7 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
       transaction_id: order.id,
       razorpay_order_id: order.id,
       receipt: order.receipt,
-      payment_amount: order.amount,
+      payment_amount: Number(order.amount) / 100,
       status: 'created', 
     });
 
@@ -49,39 +50,58 @@ export const createOrder = async (req: AuthenticatedRequest, res: Response): Pro
 
 
 
-export const verifySignature = async (req: AuthenticatedRequest, res: Response) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, amount, currency = 'INR', receipt } = req.body;
-  const userId = req.user?.id;
+export const verifySignature = async (req: AuthenticatedRequest, res: Response):Promise<void> => {
+      const {
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        amount,
+        receipt,
+        counselorId
+      } = req.body;
 
-  const expectedSignature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_SECRET!)
-    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex');
-
-  if (expectedSignature === razorpay_signature) {
-    try {
-      const existing = await PaymentResponseModel.findOne({ transaction_id: razorpay_payment_id });
-
-      if (!existing) {
-        const payment = new PaymentResponseModel({
-          userId,
-          transaction_id: razorpay_payment_id, // <- THIS is your transaction_id
-          razorpay_order_id,
-          razorpay_signature,
-          receipt,
-          payment_amount: amount,
-          status: 'success', // Optional: set to 'pending' if you're waiting for webhook
-        });
-
-        await payment.save();
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, message: 'Unauthorized: user ID missing' });
+        return
       }
 
-      res.status(200).json({ success: true, message: 'Payment verified and stored' });
-    } catch (error) {
-      console.error('DB Error:', error);
-      res.status(500).json({ success: false, message: 'DB save failed' });
-    }
-  } else {
-    res.status(400).json({ success: false, message: 'Invalid signature' });
-  }
-};
+      const expectedSignature = crypto
+        .createHmac('sha256', process.env.RAZORPAY_SECRET!)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+
+      const status = expectedSignature === razorpay_signature ? 'success' : 'failed';
+
+      try {
+        const existing = await PaymentResponseModel.findOne({ transaction_id: razorpay_payment_id });
+
+        if (!existing) {
+          const payment = new PaymentResponseModel({
+            userId,
+            transaction_id: razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature,
+            receipt,
+            payment_amount: amount,
+            status, // 'success' or 'failed'
+          });
+
+          await payment.save();
+        }
+
+        if (status === 'success') {
+
+          const session = await startChatSession(userId, counselorId, amount);
+
+          res.status(200).json({ success: true, message: 'Payment verified and stored' });
+        } else {
+          res.status(400).json({ success: false, message: 'Invalid signature, stored as failed' });
+        }
+
+      } catch (error) {
+        console.error('Error in VerifySignature:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+      }
+    };
+
