@@ -56,6 +56,8 @@ export const sendPayment = async (req: AuthenticatedRequest, res: Response): Pro
 };
 
 
+
+
 export const getPaymentStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
@@ -68,7 +70,6 @@ export const getPaymentStatus = async (req: AuthenticatedRequest, res: Response)
         status_code: 404,
         message: "Chat session not found",
       });
-
       return;
     }
 
@@ -83,9 +84,10 @@ export const getPaymentStatus = async (req: AuthenticatedRequest, res: Response)
     }
 
     const now = new Date();
-    let paidToBeAmount: number;
+    const isExpired = now > expiredAt;
 
-    if (now > expiredAt) {
+    let paidToBeAmount: number;
+    if (isExpired) {
       paidToBeAmount = 99;
     } else if (amount === 99 || amount === 199) {
       paidToBeAmount = 199;
@@ -96,6 +98,7 @@ export const getPaymentStatus = async (req: AuthenticatedRequest, res: Response)
     res.status(200).json({
       status_code: 200,
       paidToBeAmount,
+      isExpired,
     });
 
   } catch (error) {
@@ -106,3 +109,4 @@ export const getPaymentStatus = async (req: AuthenticatedRequest, res: Response)
     });
   }
 };
+
